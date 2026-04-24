@@ -70,6 +70,32 @@ If port 3000 is already in use (common when multiple sessions are open), run wit
 $env:PORT=3003; npm start
 ```
 
+## 🖥 Desktop App (Electron)
+
+Sangeet can run as a standalone desktop app with:
+
+- Standard Windows titlebar and native window controls
+- Resizable window borders
+- No browser menu/toolbar/status UI
+
+Run desktop mode:
+
+```bash
+npm run electron
+```
+
+Build a Windows executable installer:
+
+```bash
+npm run dist:win
+```
+
+Generated installers are written to:
+
+```text
+release/
+```
+
 ## 🧭 App Behavior
 
 - Click the app title ✦ Sangeet ✦ to open the About screen.

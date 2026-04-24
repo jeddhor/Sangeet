@@ -5,6 +5,7 @@ const { Readable } = require("stream");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+let httpServer = null;
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -516,10 +517,6 @@ app.get("/api/stream/:id", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Navidrome client running on http://localhost:${PORT}`);
-});
-
 app.get("/api/playlists", async (req, res) => {
   try {
     const root = await callSubsonic("getPlaylists");
@@ -579,3 +576,68 @@ app.post("/api/playlists/:id/songs", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+function startServer(options = {}) {
+  const requestedPort = Number(options.port ?? process.env.PORT ?? PORT);
+  const port = Number.isFinite(requestedPort) ? requestedPort : 3000;
+  const host = options.host || process.env.HOST || "0.0.0.0";
+
+  if (httpServer) {
+    const address = httpServer.address();
+    return Promise.resolve({
+      server: httpServer,
+      port: address && typeof address === "object" ? address.port : port,
+      host
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const server = app.listen(port, host, () => {
+      httpServer = server;
+      const address = server.address();
+      resolve({
+        server,
+        port: address && typeof address === "object" ? address.port : port,
+        host
+      });
+    });
+
+    server.on("error", (error) => {
+      reject(error);
+    });
+  });
+}
+
+function stopServer() {
+  if (!httpServer) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    httpServer.close((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      httpServer = null;
+      resolve();
+    });
+  });
+}
+
+if (require.main === module) {
+  startServer({ port: PORT })
+    .then(({ port }) => {
+      console.log(`Sangeet running on http://localhost:${port}`);
+    })
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+}
+
+module.exports = {
+  app,
+  startServer,
+  stopServer
+};

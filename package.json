@@ -2,10 +2,14 @@
   "name": "navidrome-client",
   "version": "1.0.0",
   "description": "Slick Node.js Navidrome desktop-style web client",
-  "main": "server.js",
+  "main": "electron-main.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "electron": "electron .",
+    "electron:dev": "electron .",
+    "pack": "electron-builder --dir",
+    "dist:win": "electron-builder --win nsis"
   },
   "keywords": [
     "navidrome",
@@ -20,5 +24,29 @@
   },
   "dependencies": {
     "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "electron": "^41.3.0",
+    "electron-builder": "^26.8.1"
+  },
+  "build": {
+    "appId": "com.sangeet.desktop",
+    "productName": "Sangeet",
+    "asar": true,
+    "files": [
+      "electron-main.js",
+      "server.js",
+      "public/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    }
   }
 }
