@@ -1,6 +1,6 @@
 {
-  "name": "navidrome-client",
-  "version": "0.2.1-alpha",
+  "name": "sangeet",
+  "version": "0.2.2-alpha",
   "description": "Slick Node.js Navidrome desktop-style web client",
   "main": "electron-main.js",
   "scripts": {

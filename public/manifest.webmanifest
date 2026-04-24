@@ -1,0 +1,26 @@
+{
+  "id": "/",
+  "name": "Sangeet",
+  "short_name": "Sangeet",
+  "description": "A colorful Navidrome web client for browsing, playing, and managing music.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#12161d",
+  "theme_color": "#0c9f7a",
+  "icons": [
+    {
+      "src": "/assets/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

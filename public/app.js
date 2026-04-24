@@ -124,6 +124,18 @@ function setNowView(view) {
   }
 }
 
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // No-op: app should continue working even if service worker registration fails.
+    });
+  });
+}
+
 function setSidebarCollapsed(collapsed) {
   state.sidebarCollapsed = Boolean(collapsed);
   if (els.layout) {
@@ -820,7 +832,8 @@ function bindEvents() {
     const credentials = {
       serverUrl: String(formData.get("serverUrl") || ""),
       username: String(formData.get("username") || ""),
-      password: String(formData.get("password") || "")
+      password: String(formData.get("password") || ""),
+      theme: String(formData.get("theme") || "graphite-light")
     };
     const nextSettings = {
       serverUrl: credentials.serverUrl,
@@ -973,7 +986,7 @@ async function bootstrap() {
   els.serverUrlInput.value = (sessionState && sessionState.serverUrl) || existing.serverUrl || "";
   els.usernameInput.value = (sessionState && sessionState.username) || existing.username || "";
   els.passwordInput.value = "";
-  const savedTheme = existing.theme || "graphite-light";
+  const savedTheme = (sessionState && sessionState.theme) || existing.theme || "graphite-light";
   els.themeSelect.value = savedTheme;
 
   const allowedSortFields = new Set(["title", "genre", "duration", "favorite"]);
@@ -1010,3 +1023,4 @@ async function bootstrap() {
 }
 
 bootstrap();
+registerServiceWorker();

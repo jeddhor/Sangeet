@@ -19,6 +19,10 @@ const session = {
   password: ""
 };
 
+const uiSettings = {
+  theme: "graphite-light"
+};
+
 const SUBSONIC_API_VERSION = "1.16.1";
 const SUBSONIC_CLIENT_NAME = "node-navidrome-client";
 const APP_VERSION = String(packageInfo.version || "0.0.0");
@@ -119,6 +123,10 @@ async function loadPersistedSession() {
     session.password = password;
   }
 
+  if (typeof persisted.theme === "string" && persisted.theme.trim()) {
+    uiSettings.theme = persisted.theme.trim();
+  }
+
   persistedSessionLoaded = true;
 }
 
@@ -134,6 +142,7 @@ async function persistSession() {
     serverUrl: session.serverUrl,
     username: session.username,
     passwordEncrypted,
+    theme: uiSettings.theme,
     updatedAt: new Date().toISOString()
   });
 }
@@ -394,9 +403,13 @@ function extractTagLyrics(song) {
 
 app.post("/api/session", async (req, res) => {
   try {
-    const { serverUrl, username, password } = req.body;
+    const { serverUrl, username, password, theme } = req.body;
     session.serverUrl = normalizeServerUrl(serverUrl);
     session.username = String(username || "").trim();
+
+    if (typeof theme === "string" && theme.trim()) {
+      uiSettings.theme = theme.trim();
+    }
 
     if (typeof password === "string" && password.trim()) {
       session.password = password;
@@ -428,7 +441,8 @@ app.get("/api/session", (req, res) => {
     serverUrl: session.serverUrl,
     username: session.username,
     secureStorage,
-    appVersion: APP_VERSION
+    appVersion: APP_VERSION,
+    theme: uiSettings.theme
   });
 });
 

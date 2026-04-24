@@ -2,6 +2,8 @@ const { app, BrowserWindow, Menu } = require("electron");
 const { startServer, stopServer } = require("./server");
 
 let mainWindow = null;
+const DESKTOP_HOST = "127.0.0.1";
+const PREFERRED_PORTS = [39241, 39242, 39243, 39244, 39245];
 
 function createMainWindow(url) {
   const window = new BrowserWindow({
@@ -30,16 +32,35 @@ function createMainWindow(url) {
   return window;
 }
 
+async function startServerWithPreferredPort() {
+  for (const port of PREFERRED_PORTS) {
+    try {
+      return await startServer({
+        port,
+        host: DESKTOP_HOST
+      });
+    } catch (error) {
+      if (error && error.code === "EADDRINUSE") {
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  // Last-resort fallback if all preferred ports are unavailable.
+  return startServer({
+    port: 0,
+    host: DESKTOP_HOST
+  });
+}
+
 async function bootstrapElectron() {
   try {
     Menu.setApplicationMenu(null);
 
-    const { port } = await startServer({
-      port: 0,
-      host: "127.0.0.1"
-    });
+    const { port } = await startServerWithPreferredPort();
 
-    mainWindow = createMainWindow(`http://127.0.0.1:${port}`);
+    mainWindow = createMainWindow(`http://${DESKTOP_HOST}:${port}`);
 
     mainWindow.on("closed", () => {
       mainWindow = null;
