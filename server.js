@@ -292,27 +292,67 @@ function extractLyricsText(value) {
 
 function extractLyricsFromRoot(root) {
   const list = root.lyricsList || {};
-  const structured = safeArray(list.structuredLyrics);
+  const structured = [
+    ...safeArray(list.structuredLyrics),
+    ...safeArray(root.structuredLyrics),
+    ...safeArray(root.lyrics && root.lyrics.structuredLyrics)
+  ];
+
+  let fallbackStructured = "";
   for (const entry of structured) {
     const lang = String(entry.lang || entry.language || "").toLowerCase();
     const text = extractLyricsText(entry.line || entry.lines || entry.lyrics || entry.text || entry.value || "");
 
-    if (text && (lang === "eng" || lang === "en" || !lang)) {
+    if (!text) {
+      continue;
+    }
+
+    if (lang === "eng" || lang === "en" || !lang) {
       return text;
+    }
+
+    if (!fallbackStructured) {
+      fallbackStructured = text;
     }
   }
 
-  const plain = safeArray(list.lyrics);
+  if (fallbackStructured) {
+    return fallbackStructured;
+  }
+
+  const plain = [
+    ...safeArray(list.lyrics),
+    ...safeArray(root.lyrics)
+  ];
+
+  let fallbackPlain = "";
   for (const entry of plain) {
     if (typeof entry === "string" && entry.trim()) {
-      return normalizeLyricsText(entry);
+      const normalized = normalizeLyricsText(entry);
+      if (normalized) {
+        return normalized;
+      }
+      continue;
     }
 
     const lang = String(entry.lang || entry.language || "").toLowerCase();
     const value = extractLyricsText(entry.value || entry.text || entry.lyrics || entry.content || entry.data || "");
-    if (value && (lang === "eng" || lang === "en" || !lang)) {
+
+    if (!value) {
+      continue;
+    }
+
+    if (lang === "eng" || lang === "en" || !lang) {
       return value;
     }
+
+    if (!fallbackPlain) {
+      fallbackPlain = value;
+    }
+  }
+
+  if (fallbackPlain) {
+    return fallbackPlain;
   }
 
   return "";
@@ -327,7 +367,15 @@ function extractTagLyrics(song) {
 
   function isLyricsToken(value) {
     const token = normalizeToken(value);
-    return token === "lyrics" || token === "lyricseng" || token === "syncedlyrics" || token === "unsyncedlyrics";
+    return (
+      token === "lyrics" ||
+      token === "lyricseng" ||
+      token === "syncedlyrics" ||
+      token === "unsyncedlyrics" ||
+      token.endsWith("lyrics") ||
+      token.includes("lyricseng") ||
+      token.includes("syncedlyrics")
+    );
   }
 
   function extractText(value) {
