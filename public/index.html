@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sangeet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Righteous&family=Sora:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body data-now-view="art">
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <button id="aboutBtn" class="brand-btn" type="button" title="About Sangeet" aria-label="About Sangeet">✦ Sangeet ✦</button>
+        </div>
+        <div class="topbar-actions">
+          <div class="search-wrap">
+            <input id="searchInput" type="search" placeholder="Search songs, artists, albums..." />
+          </div>
+          <button id="settingsBtn" class="icon-btn" title="Settings">⚙</button>
+          <button id="toggleSidebarBtnMobile" class="icon-btn" title="Toggle Library" aria-label="Toggle Library" aria-pressed="false">☰</button>
+        </div>
+      </header>
+
+      <nav id="mobileTabs" class="mobile-tabs" aria-label="Mobile sections">
+        <button class="mobile-tab-btn active" data-mobile-view="playlist" type="button">Playlist</button>
+        <button class="mobile-tab-btn" data-mobile-view="now" type="button">Now Playing</button>
+      </nav>
+
+      <main class="layout">
+        <aside id="sidebar" class="sidebar">
+          <section>
+            <h2>Library</h2>
+            <nav id="categoryNav" class="category-nav">
+              <button data-category="tracks" class="active"><span class="nav-icon">♫</span> Tracks</button>
+              <button data-category="genres"><span class="nav-icon">◍</span> Genres</button>
+              <button data-category="favorites"><span class="nav-icon">❤</span> Favorites</button>
+              <button data-category="playlists"><span class="nav-icon">☰</span> Playlists</button>
+            </nav>
+          </section>
+        </aside>
+
+        <section class="center-panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="listTitle">Tracks</h2>
+              <p id="listSubtitle">Browse your library and play music.</p>
+            </div>
+            <div class="sort-controls">
+              <label for="sortFieldSelect">Sort</label>
+              <select id="sortFieldSelect">
+                <option value="title">Title</option>
+                <option value="genre">Genre</option>
+                <option value="duration">Duration</option>
+                <option value="favorite">Favorite</option>
+              </select>
+              <button id="sortDirBtn" class="sort-dir-btn" type="button">Asc</button>
+            </div>
+          </div>
+
+          <div class="category-content">
+            <div class="category-col">
+              <div class="category-head">
+                <h3>Category</h3>
+                <button id="newPlaylistBtn" class="new-playlist-btn" type="button" title="Create playlist">+ New</button>
+              </div>
+              <div id="categoryItems" class="category-items"></div>
+            </div>
+            <div class="tracks-col">
+              <h3>Playlist</h3>
+              <div id="trackColumns" class="track-columns">
+                <button type="button" class="track-col-btn" data-sort-field="title">Title</button>
+                <button type="button" class="track-col-btn" data-sort-field="genre">Genre</button>
+                <button type="button" class="track-col-btn" data-sort-field="duration">Duration</button>
+                <button type="button" class="track-col-btn" data-sort-field="favorite">Favorite</button>
+              </div>
+              <div id="tracksList" class="tracks-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="right-panel">
+          <div class="now-playing-head">
+            <h2>♪ Now Playing</h2>
+            <button id="clearNowPlayingBtn" class="clear-now-btn" type="button" title="Clear now playing">✕</button>
+          </div>
+          <div id="nowMobileToggle" class="now-mobile-toggle" role="tablist" aria-label="Now Playing view">
+            <button id="nowViewArtBtn" class="now-mobile-toggle-btn active" type="button" role="tab" aria-selected="true">Art</button>
+            <button id="nowViewLyricsBtn" class="now-mobile-toggle-btn" type="button" role="tab" aria-selected="false">Lyrics</button>
+          </div>
+          <div id="nowCoverWrap" class="cover-wrap no-cover">
+            <img id="nowCover" class="cover" alt="Album Art" />
+            <div class="cover-placeholder" aria-hidden="true">
+              <div class="cover-glyph">♫</div>
+              <div class="cover-caption">No track playing</div>
+            </div>
+          </div>
+          <div class="now-meta">
+            <h3 id="nowTitle">Nothing playing</h3>
+            <p id="nowArtist">-</p>
+            <p id="nowAlbum">-</p>
+          </div>
+          <section class="lyrics-box">
+            <h3>✎ Lyrics</h3>
+            <pre id="lyricsText">Lyrics will appear here when available.</pre>
+          </section>
+        </aside>
+      </main>
+
+      <footer class="player-bar">
+        <div class="transport">
+          <button id="backBtn">⏮</button>
+          <button id="playPauseBtn">▶</button>
+          <button id="nextBtn">⏭</button>
+          <button id="stopBtn">⏹</button>
+          <button id="shuffleBtn" class="toggle">Random</button>
+          <button id="repeatBtn" class="toggle">Repeat: Off</button>
+        </div>
+
+        <div class="timeline">
+          <span id="currentTime">0:00</span>
+          <input id="progressSlider" type="range" min="0" max="100" value="0" />
+          <span id="duration">0:00</span>
+        </div>
+
+        <div class="volume-wrap">
+          <label for="volumeSlider">Volume</label>
+          <input id="volumeSlider" type="range" min="0" max="1" step="0.01" value="0.9" />
+        </div>
+      </footer>
+    </div>
+
+    <dialog id="settingsModal" class="settings-modal">
+      <form id="settingsForm" method="dialog">
+        <h2>Settings</h2>
+
+        <label>
+          Server URL
+          <input name="serverUrl" id="serverUrlInput" placeholder="https://your-navidrome.example.com" required />
+        </label>
+        <label>
+          Username
+          <input name="username" id="usernameInput" required />
+        </label>
+        <label>
+          Password
+          <input name="password" id="passwordInput" type="password" required />
+        </label>
+
+        <label>
+          Theme
+          <select id="themeSelect" name="theme">
+            <option value="graphite-light">Graphite Light</option>
+            <option value="graphite-dark">Graphite Dark</option>
+            <option value="ocean-light">Ocean Light</option>
+            <option value="ember-dark">Ember Dark</option>
+            <option value="neon-hacker">Neon Hacker</option>
+            <option value="bubblegum-light">Bubblegum Cute</option>
+            <option value="synthwave-dark">Synthwave Dark</option>
+            <option value="mint-light">Mint Light</option>
+          </select>
+        </label>
+
+        <div id="themeSwatches" class="theme-swatches" aria-label="Theme previews"></div>
+
+        <p id="settingsStatus" class="settings-status"></p>
+
+        <div class="settings-actions">
+          <button type="button" id="cancelSettingsBtn">Cancel</button>
+          <button type="submit" class="primary">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="playlistModal" class="playlist-modal">
+      <form id="playlistForm" method="dialog">
+        <h2 id="playlistModalTitle">Add To Playlist</h2>
+
+        <label>
+          Existing Playlist
+          <select id="playlistSelect"></select>
+        </label>
+
+        <label>
+          Or Create New
+          <input id="newPlaylistNameInput" placeholder="My Playlist" />
+        </label>
+
+        <p id="playlistModalStatus" class="settings-status"></p>
+
+        <div class="settings-actions">
+          <button type="button" id="cancelPlaylistBtn">Cancel</button>
+          <button type="submit" class="primary">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="aboutModal" class="about-modal">
+      <form method="dialog" class="about-content">
+        <h2>About Sangeet</h2>
+        <p>
+          Sangeet is a vibrant Navidrome web client focused on smooth playback, fast browsing, and a joyful music-first experience.
+        </p>
+        <ul>
+          <li>Three-pane desktop layout with responsive mobile views.</li>
+          <li>Library navigation for tracks, genres, favorites, and playlists.</li>
+          <li>Now Playing with album art, lyrics, and transport controls.</li>
+          <li>Theme support with colorful personalities.</li>
+        </ul>
+        <p>
+          Built with Node.js + Express and powered by the Subsonic-compatible Navidrome API.
+        </p>
+        <div class="settings-actions">
+          <button type="submit" class="primary">Close</button>
+        </div>
+      </form>
+    </dialog>
+
+    <audio id="audioPlayer"></audio>
+    <script src="/app.js"></script>
+  </body>
+</html>
