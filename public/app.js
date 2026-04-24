@@ -1,3 +1,9 @@
+const storedSettings = JSON.parse(localStorage.getItem("settings") || "{}");
+if (storedSettings && typeof storedSettings === "object" && Object.prototype.hasOwnProperty.call(storedSettings, "password")) {
+  delete storedSettings.password;
+  localStorage.setItem("settings", JSON.stringify(storedSettings));
+}
+
 const state = {
   category: "tracks",
   mobileView: "playlist",
@@ -14,7 +20,7 @@ const state = {
   sortField: "title",
   sortDir: "asc",
   favorites: JSON.parse(localStorage.getItem("favorites") || "[]"),
-  settings: JSON.parse(localStorage.getItem("settings") || "{}")
+  settings: storedSettings
 };
 
 const themePalette = [
@@ -30,6 +36,7 @@ const themePalette = [
 
 const els = {
   aboutBtn: document.getElementById("aboutBtn"),
+  aboutVersion: document.getElementById("aboutVersion"),
   mobileTabs: document.getElementById("mobileTabs"),
   layout: document.querySelector(".layout"),
   categoryNav: document.getElementById("categoryNav"),
@@ -137,6 +144,16 @@ function setTheme(theme) {
   state.settings.theme = theme;
   localStorage.setItem("settings", JSON.stringify(state.settings));
   updateThemeSwatchState(theme);
+}
+
+function setAboutVersionLabel(version) {
+  if (!els.aboutVersion) {
+    return;
+  }
+
+  const raw = String(version || "").trim();
+  const normalized = raw ? (raw.startsWith("v") ? raw : `v${raw}`) : "v0.0.0";
+  els.aboutVersion.textContent = `Version ${normalized}`;
 }
 
 function updateThemeSwatchState(theme) {
@@ -800,10 +817,14 @@ function bindEvents() {
   els.settingsForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const formData = new FormData(els.settingsForm);
-    const nextSettings = {
+    const credentials = {
       serverUrl: String(formData.get("serverUrl") || ""),
       username: String(formData.get("username") || ""),
-      password: String(formData.get("password") || ""),
+      password: String(formData.get("password") || "")
+    };
+    const nextSettings = {
+      serverUrl: credentials.serverUrl,
+      username: credentials.username,
       theme: String(formData.get("theme") || "graphite-light")
     };
 
@@ -812,7 +833,7 @@ function bindEvents() {
     try {
       await api("/api/session", {
         method: "POST",
-        body: JSON.stringify(nextSettings)
+        body: JSON.stringify(credentials)
       });
 
       state.settings = nextSettings;
@@ -939,10 +960,19 @@ function bindEvents() {
 
 async function bootstrap() {
   const existing = state.settings;
+  let sessionState = null;
 
-  els.serverUrlInput.value = existing.serverUrl || "";
-  els.usernameInput.value = existing.username || "";
-  els.passwordInput.value = existing.password || "";
+  try {
+    sessionState = await api("/api/session");
+  } catch (_error) {
+    sessionState = null;
+  }
+
+  setAboutVersionLabel(sessionState && sessionState.appVersion ? sessionState.appVersion : "");
+
+  els.serverUrlInput.value = (sessionState && sessionState.serverUrl) || existing.serverUrl || "";
+  els.usernameInput.value = (sessionState && sessionState.username) || existing.username || "";
+  els.passwordInput.value = "";
   const savedTheme = existing.theme || "graphite-light";
   els.themeSelect.value = savedTheme;
 
@@ -971,17 +1001,9 @@ async function bootstrap() {
 
   setSidebarCollapsed(state.sidebarCollapsed);
 
-  if (existing.serverUrl && existing.username && existing.password) {
-    try {
-      await api("/api/session", {
-        method: "POST",
-        body: JSON.stringify(existing)
-      });
-      await loadCategory(state.category);
-      return;
-    } catch (error) {
-      els.listSubtitle.textContent = "Open settings to configure Navidrome connection.";
-    }
+  if (sessionState && sessionState.configured) {
+    await loadCategory(state.category);
+    return;
   }
 
   els.listSubtitle.textContent = "Configure your Navidrome server in Settings.";

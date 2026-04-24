@@ -1,11 +1,14 @@
 const express = require("express");
 const crypto = require("crypto");
 const path = require("path");
+const fs = require("fs/promises");
 const { Readable } = require("stream");
+const packageInfo = require("./package.json");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 let httpServer = null;
+let persistedSessionLoaded = false;
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "public")));
@@ -18,6 +21,7 @@ const session = {
 
 const SUBSONIC_API_VERSION = "1.16.1";
 const SUBSONIC_CLIENT_NAME = "node-navidrome-client";
+const APP_VERSION = String(packageInfo.version || "0.0.0");
 
 function md5(value) {
   return crypto.createHash("md5").update(value).digest("hex");
@@ -28,6 +32,110 @@ function normalizeServerUrl(url) {
     return "";
   }
   return url.replace(/\/$/, "");
+}
+
+function getSecureStorage() {
+  try {
+    const electron = require("electron");
+    if (electron && electron.safeStorage && electron.safeStorage.isEncryptionAvailable()) {
+      return electron.safeStorage;
+    }
+  } catch (_error) {
+    // Running outside Electron.
+  }
+  return null;
+}
+
+function getConfigPath() {
+  try {
+    const electron = require("electron");
+    if (electron && electron.app && electron.app.getPath) {
+      return path.join(electron.app.getPath("userData"), "settings.json");
+    }
+  } catch (_error) {
+    // Running outside Electron.
+  }
+
+  return path.join(__dirname, ".sangeet", "settings.json");
+}
+
+async function readPersistedSettings() {
+  const configPath = getConfigPath();
+  try {
+    const text = await fs.readFile(configPath, "utf8");
+    return JSON.parse(text);
+  } catch (_error) {
+    return {};
+  }
+}
+
+async function writePersistedSettings(payload) {
+  const configPath = getConfigPath();
+  await fs.mkdir(path.dirname(configPath), { recursive: true });
+  await fs.writeFile(configPath, JSON.stringify(payload, null, 2), "utf8");
+}
+
+function encryptPassword(password) {
+  const safeStorage = getSecureStorage();
+  if (!safeStorage || !password) {
+    return null;
+  }
+
+  const encryptedBuffer = safeStorage.encryptString(password);
+  return encryptedBuffer.toString("base64");
+}
+
+function decryptPassword(cipherTextBase64) {
+  const safeStorage = getSecureStorage();
+  if (!safeStorage || !cipherTextBase64) {
+    return "";
+  }
+
+  const buffer = Buffer.from(String(cipherTextBase64), "base64");
+  return safeStorage.decryptString(buffer);
+}
+
+async function loadPersistedSession() {
+  if (persistedSessionLoaded) {
+    return;
+  }
+
+  const persisted = await readPersistedSettings();
+  const serverUrl = normalizeServerUrl(persisted.serverUrl || "");
+  const username = String(persisted.username || "");
+  let password = "";
+
+  if (persisted.passwordEncrypted) {
+    try {
+      password = decryptPassword(persisted.passwordEncrypted);
+    } catch (_error) {
+      password = "";
+    }
+  }
+
+  if (serverUrl && username && password) {
+    session.serverUrl = serverUrl;
+    session.username = username;
+    session.password = password;
+  }
+
+  persistedSessionLoaded = true;
+}
+
+async function persistSession() {
+  const passwordEncrypted = encryptPassword(session.password);
+
+  if (!passwordEncrypted) {
+    // Do not write plaintext credentials to disk if secure storage is unavailable.
+    return;
+  }
+
+  await writePersistedSettings({
+    serverUrl: session.serverUrl,
+    username: session.username,
+    passwordEncrypted,
+    updatedAt: new Date().toISOString()
+  });
 }
 
 function validateSession() {
@@ -288,10 +396,22 @@ app.post("/api/session", async (req, res) => {
   try {
     const { serverUrl, username, password } = req.body;
     session.serverUrl = normalizeServerUrl(serverUrl);
-    session.username = username || "";
-    session.password = password || "";
+    session.username = String(username || "").trim();
+
+    if (typeof password === "string" && password.trim()) {
+      session.password = password;
+    }
+
+    if (!session.password) {
+      res.status(400).json({
+        ok: false,
+        message: "Password is required"
+      });
+      return;
+    }
 
     await callSubsonic("ping");
+    await persistSession();
     res.json({ ok: true });
   } catch (error) {
     res.status(400).json({
@@ -302,10 +422,13 @@ app.post("/api/session", async (req, res) => {
 });
 
 app.get("/api/session", (req, res) => {
+  const secureStorage = Boolean(getSecureStorage());
   res.json({
     configured: validateSession(),
     serverUrl: session.serverUrl,
-    username: session.username
+    username: session.username,
+    secureStorage,
+    appVersion: APP_VERSION
   });
 });
 
@@ -591,21 +714,24 @@ function startServer(options = {}) {
     });
   }
 
-  return new Promise((resolve, reject) => {
-    const server = app.listen(port, host, () => {
-      httpServer = server;
-      const address = server.address();
-      resolve({
-        server,
-        port: address && typeof address === "object" ? address.port : port,
-        host
-      });
-    });
+  return loadPersistedSession().then(
+    () =>
+      new Promise((resolve, reject) => {
+        const server = app.listen(port, host, () => {
+          httpServer = server;
+          const address = server.address();
+          resolve({
+            server,
+            port: address && typeof address === "object" ? address.port : port,
+            host
+          });
+        });
 
-    server.on("error", (error) => {
-      reject(error);
-    });
-  });
+        server.on("error", (error) => {
+          reject(error);
+        });
+      })
+  );
 }
 
 function stopServer() {
