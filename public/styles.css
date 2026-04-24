@@ -775,17 +775,14 @@ body {
   text-align: center;
 }
 
-.about-head {
-  color: color-mix(in srgb, var(--accent) 72%, var(--text));
-  font-size: 1.1rem;
-  letter-spacing: 0.5rem;
-  margin-top: 0.1rem;
-}
-
 .about-content h2 {
   margin: 0;
   font-family: "Righteous", "Sora", sans-serif;
   letter-spacing: 0.03em;
+}
+
+.about-title {
+  color: color-mix(in srgb, var(--accent) 72%, var(--text));
 }
 
 .about-content p {
