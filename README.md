@@ -1,5 +1,5 @@
 <p align="center">
-  ✦ Sangeet ✦
+  <h1>✦ Sangeet ✦</h1>
 </p>
 
 <p align="center">
