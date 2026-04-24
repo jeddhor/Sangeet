@@ -31,6 +31,14 @@
 - Frontend: Vanilla HTML, CSS, JavaScript
 - API: Navidrome Subsonic-compatible REST endpoints
 
+## 🎨 Visual Identity
+
+Sangeet keeps a playful aesthetic centered around color, motion, and music-first focus.
+
+<p align="center">
+  <img src="public/assets/logo.png" alt="Sangeet logo" width="420" />
+</p>
+
 ## 🚀 Quick Start
 
 1. Install dependencies:
