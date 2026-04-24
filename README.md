@@ -1,4 +1,6 @@
-# ✦ Sangeet ✦
+<p align="center">
+  # ✦ Sangeet ✦
+</p>
 
 <p align="center">
   <strong>A colorful, responsive Navidrome web client built with Node.js + Express.</strong><br/>
