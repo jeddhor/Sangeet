@@ -373,7 +373,7 @@ function renderCategoryItems() {
 
   if (state.category === "playlists") {
     if (!state.categoryItems.length) {
-      els.categoryItems.innerHTML = '<div class="list-item">No playlists yet. Use + New to create one.</div>';
+      els.categoryItems.innerHTML = '<div class="list-item">No playlists yet. Use + to create one.</div>';
       return;
     }
 

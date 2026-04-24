@@ -403,6 +403,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+  margin-bottom: 0.55rem;
 }
 
 .category-head h3 {
@@ -411,12 +412,19 @@ body {
 
 .new-playlist-btn {
   border: 1px solid var(--line);
-  border-radius: 9px;
+  border-radius: 10px;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--text);
-  min-height: 1.8rem;
-  padding: 0.2rem 0.5rem;
-  font-size: 0.78rem;
+  width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
 }
 
